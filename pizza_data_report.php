@@ -70,7 +70,7 @@ function output_person_details_row($pizzas, $pizzerias){
             .pizzaDataRow td { padding-left: 10px; }
             .pizzaDataDetailsCell { padding-left: 20px !important; }
         </style>
-        <h1>Pizza Data Report</h1>
+        <h1>Customer Data Report</h1>
         <?php
 
             if($connection_error){

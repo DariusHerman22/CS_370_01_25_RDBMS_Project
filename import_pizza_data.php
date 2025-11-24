@@ -38,7 +38,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 ?>
 
 <?php include_once("Header.php") ?>
-		<h1>Pizza Data Import</h1>
+		<h1>Customer Data Import</h1>
 
 		<?php
 
