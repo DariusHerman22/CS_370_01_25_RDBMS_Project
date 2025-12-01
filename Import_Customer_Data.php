@@ -8,7 +8,7 @@ $import_error_message = "";
 if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 {
 	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+	$con = @mysqli_connect("localhost", "pizza_user", "password", "pizza_db");
 
 	if( mysqli_connect_errno() ){
 		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
@@ -21,9 +21,78 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$lines = explode( "\n", $contents );
 
 			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
+				$parsedLine = str_getcsv( $line );
+
+                if(count($parsedLine) < 16){continue;}
+
+                $CustomerID = (int)$parsedLine[0];
+                $Fname = $parsedLine[1];
+                $Lname = $parsedLine[2];
+
+                $PhoneNumber = $parsedLine[5];
+                $EmailAddress = $parsedLine[6];
+
+                $CustomerAddressID = (int)$parsedLine[8];
+                $StreetNameNumber = $parsedLine[10];
+                $City = $parsedLine[11];
+                $State = $parsedLine[12];
+                $ZipCode = $parsedLine[13];
+                $Country = $parsedLine[14];
+                $AddressType = (int)$parsedLine[15];
+
+                $Table1 = $con->prepare("
+                INSERT INTO Customer(CustomerID, Fname, Lname)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    Fname = VALUES(Fname),
+                    Lname = VALUES(Lname)
+                ");
+                $Table1->bind_param(
+                        "iss",
+                        $CustomerID,
+                        $Fname,
+                        $Lname);
+                $Table1->execute();
+
+                $Table2 = $con->prepare("
+                INSERT INTO CustomerContactInfo(CustomerID, PhoneNumber, EmailAddress)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    PhoneNumber = VALUES(PhoneNumber),
+                    EmailAddress = VALUES(EmailAddress)
+                ");
+                $Table2->bind_param(
+                        "iss",
+                        $CustomerID,
+                        $PhoneNumber,
+                        $EmailAddress);
+                $Table2->execute();
+
+                $Table3 = $con->prepare("
+                INSERT INTO CustomerAddress(CustomerAddressID, CustomerID, StreetNameNumber,
+                            City, State, ZipCode, Country, AddressType)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    StreetNameNumber = VALUES(StreetNameNumber),
+                    City = VALUES(City),
+                    State = VALUES(State),
+                    Zipcode = VALUES(ZipCode),
+                    Country = VALUES(Country),
+                    AddressType = VALUES(AddressType)
+                ");
+                $Table3->bind_param("iisssisi",
+                $CustomerAddressID,
+                        $CustomerID,
+                        $StreetNameNumber,
+                        $City,
+                        $State,
+                        $ZipCode,
+                        $Country,
+                        $AddressType
+                );
+                $Table3->execute();
+
+				echo implode(", ", $parsedLine) . "<br/>";
 			}
 			$import_succeeded = true;
 		}

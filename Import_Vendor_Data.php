@@ -21,9 +21,10 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$lines = explode( "\n", $contents );
 
 			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
+				$ParsedLine = str_getcsv( $line );
+
+
+				echo implode(", ", $ParsedLine) . "<br/>";
 			}
 			$import_succeeded = true;
 		}
@@ -38,7 +39,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 ?>
 
 <?php include_once("Header.php") ?>
-		<h1>Customer Data Import</h1>
+		<h1>Vendor Data Import</h1>
 
 		<?php
 
