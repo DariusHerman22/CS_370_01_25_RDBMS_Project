@@ -8,7 +8,7 @@ $import_error_message = "";
 if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 {
 	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+	$con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 	if( mysqli_connect_errno() ){
 		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
@@ -23,7 +23,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			foreach( $lines as $line){
 				$parsedLine = str_getcsv( $line );
 
-                if(count($parsedLine) < 13){continue;}
+                if(count($parsedLine) <= 12){continue;}
 
                 $ProductID = (int)$parsedLine[0];
                 $VendorCompanyID = (int)$parsedLine[1];
@@ -38,7 +38,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $Quantity = (int)$parsedLine[12];
 
                 $Table1 = $con->prepare("
-                INSERT INTO Product(ProductID, VendorCompanyID, ProductName, ProductDesc, ProductPrice, ProductStock)
+                INSERT INTO product(ProductID, VendorCompanyID, ProductName, ProductDesc, ProductPrice, ProductStock)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     $ProductName = VALUES(ProducName),
@@ -57,7 +57,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $Table1->execute();
 
                 $Table2 = $con->prepare("
-                INSERT INTO ShoppingCart(ShoppingCartID, CustomerID)
+                INSERT INTO shoppingcart(ShoppingCartID, CustomerID)
                 VALUES (?, ?)
                 ON DUPLICATE KEY UPDATE
                     $ShoppingCartID = VALUES(ShoppingCartID),
@@ -70,7 +70,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $Table2->execute();
 
                 $Table3 = $con->prepare("
-                INSERT INTO ShoppingCartItem(ShoppingCartID, ProductID, Quantity)
+                INSERT INTO shoppingcartitem(ShoppingCartID, ProductID, Quantity)
                 VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     ShoppingCartID = VALUES(ShoppingCartID),

@@ -8,7 +8,7 @@ $import_error_message = "";
 if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 {
 	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+    $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 	if( mysqli_connect_errno() ){
 		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
@@ -23,7 +23,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			foreach( $lines as $line){
 				$parsedLine = str_getcsv( $line );
 
-                if(count($parsedLine) < 15){continue;}
+                if(count($parsedLine) <= 14){continue;}
 
                 $VendorCompanyID = (int)$parsedLine[0];
                 $VendorCompanyName = $parsedLine[1];
@@ -35,14 +35,15 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $StreetNameNumber = $parsedLine[10];
                 $City = $parsedLine[11];
                 $State = $parsedLine[12];
-                $ZipCode = $parsedLine[13];
+                $ZipCode = (int)$parsedLine[13];
                 $Country = $parsedLine[14];
-                $AddressType = (int)$parsedLine[15];
+                $AddressType = $parsedLine[15];
 
                 $Table1 = $con->prepare("
-                INSERT INTO VendorCompany(VendorCompanyID, VendorCompanyName)
+                INSERT INTO vendorcompany(VendorCompanyID, VendorCompanyName)
                 VALUES (?, ?)
                 ON DUPLICATE KEY UPDATE
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     VendorCompanyName = VALUES(VendorCompanyName)
                 ");
                 $Table1->bind_param(
@@ -52,9 +53,10 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $Table1->execute();
 
                 $Table2 = $con->prepare("
-                INSERT INTO VendorContactInfo(VendorCompanyID, PhoneNumber, EmailAddress)
+                INSERT INTO vendorcontactinfo(VendorCompanyID, PhoneNumber, EmailAddress)
                 VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     PhoneNumber = VALUES(PhoneNumber),
                     EmailAddress = VALUES(EmailAddress)
                 ");
@@ -66,10 +68,12 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $Table2->execute();
 
                 $Table3 = $con->prepare("
-                INSERT INTO VendorCompanyAddress(VendorAddressID, VendorCompanyID, StreetNameNumber,
+                INSERT INTO vendorcompanyaddress(VendorAddressID, VendorCompanyID, StreetNameNumber,
                             City, State, ZipCode, Country, AddressType)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
+                    VendorAddressID = VALUES(VendorAddressID),
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     StreetNameNumber = VALUES(StreetNameNumber),
                     City = VALUES(City),
                     State = VALUES(State),
@@ -77,7 +81,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                     Country = VALUES(Country),
                     AddressType = VALUES(AddressType)
                 ");
-                $Table3->bind_param("iisssisi",
+                $Table3->bind_param("iisssiss",
                         $VendorAddressID,
                         $VendorCompanyID,
                         $StreetNameNumber,
