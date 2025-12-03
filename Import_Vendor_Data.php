@@ -21,9 +21,75 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$lines = explode( "\n", $contents );
 
 			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
+				$parsedLine = str_getcsv( $line );
+
+                if(count($parsedLine) < 15){continue;}
+
+                $VendorCompanyID = (int)$parsedLine[0];
+                $VendorCompanyName = $parsedLine[1];
+
+                $PhoneNumber = $parsedLine[5];
+                $EmailAddress = $parsedLine[6];
+
+                $VendorAddressID = (int)$parsedLine[8];
+                $StreetNameNumber = $parsedLine[10];
+                $City = $parsedLine[11];
+                $State = $parsedLine[12];
+                $ZipCode = $parsedLine[13];
+                $Country = $parsedLine[14];
+                $AddressType = (int)$parsedLine[15];
+
+                $Table1 = $con->prepare("
+                INSERT INTO VendorCompany(VendorCompanyID, VendorCompanyName)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE
+                    VendorCompanyName = VALUES(VendorCompanyName)
+                ");
+                $Table1->bind_param(
+                        "is",
+                        $VendorCompanyID,
+                        $VendorCompanyName);
+                $Table1->execute();
+
+                $Table2 = $con->prepare("
+                INSERT INTO VendorContactInfo(VendorCompanyID, PhoneNumber, EmailAddress)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    PhoneNumber = VALUES(PhoneNumber),
+                    EmailAddress = VALUES(EmailAddress)
+                ");
+                $Table2->bind_param(
+                        "iss",
+                        $VendorCompanyID,
+                        $PhoneNumber,
+                        $EmailAddress);
+                $Table2->execute();
+
+                $Table3 = $con->prepare("
+                INSERT INTO VendorCompanyAddress(VendorAddressID, VendorCompanyID, StreetNameNumber,
+                            City, State, ZipCode, Country, AddressType)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    StreetNameNumber = VALUES(StreetNameNumber),
+                    City = VALUES(City),
+                    State = VALUES(State),
+                    Zipcode = VALUES(ZipCode),
+                    Country = VALUES(Country),
+                    AddressType = VALUES(AddressType)
+                ");
+                $Table3->bind_param("iisssisi",
+                        $VendorAddressID,
+                        $VendorCompanyID,
+                        $StreetNameNumber,
+                        $City,
+                        $State,
+                        $ZipCode,
+                        $Country,
+                        $AddressType
+                );
+                $Table3->execute();
+
+				echo implode(", ", $parsedLine) . "<br/>";
 			}
 			$import_succeeded = true;
 		}
@@ -38,7 +104,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 ?>
 
 <?php include_once("Header.php") ?>
-		<h1>Customer Data Import</h1>
+		<h1>Vendor Data Import</h1>
 
 		<?php
 

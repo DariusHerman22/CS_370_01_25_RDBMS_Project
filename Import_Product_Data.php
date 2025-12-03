@@ -21,9 +21,70 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$lines = explode( "\n", $contents );
 
 			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
+				$parsedLine = str_getcsv( $line );
+
+                if(count($parsedLine) < 13){continue;}
+
+                $ProductID = (int)$parsedLine[0];
+                $VendorCompanyID = (int)$parsedLine[1];
+                $ProductName = $parsedLine[2];
+                $ProductDesc = $parsedLine[3];
+                $ProductPrice = (double)$parsedLine[4];
+                $ProductStock = (int)$parsedLine[5];
+
+                $ShoppingCartID = (int)$parsedLine[7];
+                $CustomerID = (int)$parsedLine[8];
+
+                $Quantity = (int)$parsedLine[12];
+
+                $Table1 = $con->prepare("
+                INSERT INTO Product(ProductID, VendorCompanyID, ProductName, ProductDesc, ProductPrice, ProductStock)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    $ProductName = VALUES(ProducName),
+                    $ProductDesc = VALUES(ProducDesc),
+                    $ProductPrice = VALUES(ProductPrice),
+                    $ProductStock = VALUES(ProductStock)
+                ");
+                $Table1->bind_param(
+                        "iissdi",
+                        $ProductID,
+                        $VendorCompanyID,
+                        $ProductName,
+                        $ProductDesc,
+                        $ProductPrice,
+                        $ProductStock);
+                $Table1->execute();
+
+                $Table2 = $con->prepare("
+                INSERT INTO ShoppingCart(ShoppingCartID, CustomerID)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE
+                    $ShoppingCartID = VALUES(ShoppingCartID),
+                    $CustomerID = VALUES(CustomerID) /* This might not need to be done */
+                ");
+                $Table2->bind_param(
+                        "ii",
+                        $ShoppingCartID,
+                        $CustomerID);
+                $Table2->execute();
+
+                $Table3 = $con->prepare("
+                INSERT INTO ShoppingCartItem(ShoppingCartID, ProductID, Quantity)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    ShoppingCartID = VALUES(ShoppingCartID),
+                    ProductID = VALUES(ProductID) /* This might not need to be done */
+                    Quanity = VALUES(Quanity),
+                
+                ");
+                $Table3->bind_param("iii",
+                $ShoppingCartID,
+                        $ProductID,
+                        $Quantity);
+                $Table3->execute();
+
+                echo implode(", ", $parsedLine) . "<br/>";
 			}
 			$import_succeeded = true;
 		}
@@ -38,7 +99,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 ?>
 
 <?php include_once("Header.php") ?>
-		<h1>Customer Data Import</h1>
+		<h1>Product Data Import</h1>
 
 		<?php
 
