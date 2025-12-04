@@ -3,7 +3,8 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $connection_error = false;
 $connection_error_message = "";
 
-$con = @mysqli_connect("localhost", "pizza_user", "password", "pizza_db");
+/* Replace with your own DB information */
+$con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 if(mysqli_connect_errno()){
     $connection_error = true;
