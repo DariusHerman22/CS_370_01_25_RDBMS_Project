@@ -5,79 +5,97 @@ $import_attempted = false;
 $import_succeeded = false;
 $import_error_message = "";
 
-if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
-{
-	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-	if( mysqli_connect_errno() ){
-		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
-	}
-	else{
-		$import_succeeded = true;
+    $import_attempted = true;
+    $con = mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
-		try{
-			$contents = file_get_contents( $_FILES[ "importFile" ][ "tmp_name" ] );
-			$lines = explode( "\n", $contents );
+    if( mysqli_connect_errno() ){
+        $import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
+    }
+    else{
+        $import_succeeded = true;
 
-			foreach( $lines as $line){
-				$parsedLine = str_getcsv( $line );
+        try{
 
-                if(count($parsedLine) < 15){continue;}
+            $contents = file_get_contents($_FILES["importFile"]["tmp_name"]);
+            $lines = explode("\n", $contents);
 
-                $VendorCompanyID = (int)$parsedLine[0];
+            $isFirstRow = true;
+
+            foreach ($lines as $line) {
+
+                if (trim($line) === "") continue;
+
+                $parsedLine = str_getcsv($line);
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                if (count($parsedLine) < 15) continue;
+
+                $VendorCompanyID  = (int)$parsedLine[0];
                 $VendorCompanyName = $parsedLine[1];
 
-                $PhoneNumber = $parsedLine[5];
-                $EmailAddress = $parsedLine[6];
+                $PhoneNumber = $parsedLine[4];
+                $EmailAddress = $parsedLine[5];
 
-                $VendorAddressID = (int)$parsedLine[8];
-                $StreetNameNumber = $parsedLine[10];
-                $City = $parsedLine[11];
-                $State = $parsedLine[12];
-                $ZipCode = $parsedLine[13];
-                $Country = $parsedLine[14];
-                $AddressType = (int)$parsedLine[15];
+                $VendorAddressID = (int)$parsedLine[7];
+                $StreetNameNumber = $parsedLine[9];
+                $City = $parsedLine[10];
+                $State = $parsedLine[11];
+                $ZipCode = $parsedLine[12];
+                $Country = $parsedLine[13];
+                $AddressType = $parsedLine[14];
 
                 $Table1 = $con->prepare("
-                INSERT INTO VendorCompany(VendorCompanyID, VendorCompanyName)
+                INSERT INTO vendorcompany(VendorCompanyID, VendorCompanyName)
                 VALUES (?, ?)
                 ON DUPLICATE KEY UPDATE
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     VendorCompanyName = VALUES(VendorCompanyName)
-                ");
+        ");
                 $Table1->bind_param(
                         "is",
                         $VendorCompanyID,
                         $VendorCompanyName);
                 $Table1->execute();
+                $Table1->close();
 
                 $Table2 = $con->prepare("
-                INSERT INTO VendorContactInfo(VendorCompanyID, PhoneNumber, EmailAddress)
+                INSERT INTO vendorcontactinfo (VendorCompanyID, PhoneNumber, EmailAddress)
                 VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE
+                ON DUPLICATE KEY UPDATE 
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     PhoneNumber = VALUES(PhoneNumber),
                     EmailAddress = VALUES(EmailAddress)
-                ");
+        ");
                 $Table2->bind_param(
                         "iss",
                         $VendorCompanyID,
                         $PhoneNumber,
                         $EmailAddress);
                 $Table2->execute();
+                $Table2->close();
 
                 $Table3 = $con->prepare("
-                INSERT INTO VendorCompanyAddress(VendorAddressID, VendorCompanyID, StreetNameNumber,
-                            City, State, ZipCode, Country, AddressType)
+                INSERT INTO vendorcompanyaddress (VendorAddressID, VendorCompanyID, StreetNameNumber, 
+                City, State, ZipCode, Country, AddressType)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
+                ON DUPLICATE KEY UPDATE 
+                    VendorAddressID = VALUES(VendorAddressID),
+                    VendorCompanyID = VALUES(VendorCompanyID),
                     StreetNameNumber = VALUES(StreetNameNumber),
                     City = VALUES(City),
                     State = VALUES(State),
-                    Zipcode = VALUES(ZipCode),
+                    ZipCode = VALUES(ZipCode),
                     Country = VALUES(Country),
                     AddressType = VALUES(AddressType)
                 ");
-                $Table3->bind_param("iisssisi",
+
+                $Table3->bind_param("iissssss",
                         $VendorAddressID,
                         $VendorCompanyID,
                         $StreetNameNumber,
@@ -88,19 +106,19 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                         $AddressType
                 );
                 $Table3->execute();
+                $Table3->close();
 
-				echo implode(", ", $parsedLine) . "<br/>";
-			}
-			$import_succeeded = true;
-		}
-		catch(Exception $exception){
-			$import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
-		}
+                echo implode(", ", $parsedLine) . "<br>";
+            }
 
-	}
+        }
+        catch(Exception $exception){
+            $import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
+        }
+
+    }
 
 }
-
 ?>
 
 <?php include_once("Header.php") ?>
