@@ -104,8 +104,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $ItemProductID,
                         $Quantity);
                 $Table3->execute();
-
-                if ($Table3->errno) echo "<b>CartItem ERROR:</b> {$Table3->error}<br>";
                 $Table3->close();
 
                 echo implode(", ", $parsedLine) . "<br>";
