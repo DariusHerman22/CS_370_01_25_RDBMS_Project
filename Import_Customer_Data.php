@@ -20,10 +20,20 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$contents = file_get_contents( $_FILES[ "importFile" ][ "tmp_name" ] );
 			$lines = explode( "\n", $contents );
 
-			foreach( $lines as $line){
-				$parsedLine = str_getcsv( $line );
+            $isFirstRow = true;
 
-                if(count($parsedLine) <= 15){continue;}
+            foreach( $lines as $line){
+
+                if (trim($line) === "") continue;
+
+                $parsedLine = str_getcsv($line);
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                if(count($parsedLine) < 16){continue;}
 
                 $CustomerID = (int)$parsedLine[0];
                 $FName = $parsedLine[1];
@@ -36,7 +46,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $StreetNameNumber = $parsedLine[10];
                 $City = $parsedLine[11];
                 $State = $parsedLine[12];
-                $ZipCode = (int)$parsedLine[13];
+                $ZipCode = $parsedLine[13];
                 $Country = $parsedLine[14];
                 $AddressType = $parsedLine[15];
 
@@ -86,7 +96,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                     Country = VALUES(Country),
                     AddressType = VALUES(AddressType)
                 ");
-                $Table3->bind_param("iisssiss",
+                $Table3->bind_param("iissssss",
                 $CustomerAddressID,
                         $CustomerID,
                         $StreetNameNumber,

@@ -5,25 +5,35 @@ $import_attempted = false;
 $import_succeeded = false;
 $import_error_message = "";
 
-if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
-{
-	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-	if( mysqli_connect_errno() ){
-		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
-	}
-	else{
-		$import_succeeded = true;
+    $import_attempted = true;
+    $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
-		try{
-			$contents = file_get_contents( $_FILES[ "importFile" ][ "tmp_name" ] );
-			$lines = explode( "\n", $contents );
+    if (mysqli_connect_errno()) {
+        $import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
+    }
+    else {
+        $import_succeeded = true;
 
-			foreach( $lines as $line){
-				$parsedLine = str_getcsv( $line );
+        try {
+            $contents = file_get_contents($_FILES["importFile"]["tmp_name"]);
+            $lines = explode("\n", $contents);
 
-                if(count($parsedLine) <= 12){continue;}
+            $isFirstRow = true;
+
+            foreach ($lines as $line) {
+
+                if (trim($line) === "") continue;
+
+                $parsedLine = str_getcsv($line);
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                if (count($parsedLine) < 13) continue;
 
                 $ProductID = (int)$parsedLine[0];
                 $VendorCompanyID = (int)$parsedLine[1];
@@ -35,16 +45,22 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                 $ShoppingCartID = (int)$parsedLine[7];
                 $CustomerID = (int)$parsedLine[8];
 
+                $ItemCartID = (int)$parsedLine[10];
+                $ItemProductID = (int)$parsedLine[11];
                 $Quantity = (int)$parsedLine[12];
 
                 $Table1 = $con->prepare("
-                INSERT INTO product(ProductID, VendorCompanyID, ProductName, ProductDesc, ProductPrice, ProductStock)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    $ProductName = VALUES(ProducName),
-                    $ProductDesc = VALUES(ProducDesc),
-                    $ProductPrice = VALUES(ProductPrice),
-                    $ProductStock = VALUES(ProductStock)
+                    INSERT INTO product
+                    (ProductID, VendorCompanyID, ProductName,
+                     ProductDesc, ProductPrice, ProductStock)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ProductID = VALUES(ProductID),
+                        VendorCompanyID = VALUES(VendorCompanyID),
+                        ProductName = VALUES(ProductName),
+                        ProductDesc = VALUES(ProductDesc),
+                        ProductPrice = VALUES(ProductPrice),
+                        ProductStock = VALUES(ProductStock)
                 ");
                 $Table1->bind_param(
                         "iissdi",
@@ -55,45 +71,52 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                         $ProductPrice,
                         $ProductStock);
                 $Table1->execute();
+                $Table1->close();
 
                 $Table2 = $con->prepare("
-                INSERT INTO shoppingcart(ShoppingCartID, CustomerID)
-                VALUES (?, ?)
-                ON DUPLICATE KEY UPDATE
-                    $ShoppingCartID = VALUES(ShoppingCartID),
-                    $CustomerID = VALUES(CustomerID) /* This might not need to be done */
+                    INSERT INTO shoppingcart (ShoppingCartID, CustomerID)
+                    VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ShoppingCartID = VALUES(ShoppingCartID),
+                        CustomerID = VALUES(CustomerID)
                 ");
+
                 $Table2->bind_param(
                         "ii",
                         $ShoppingCartID,
                         $CustomerID);
                 $Table2->execute();
+                $Table2->close();
 
                 $Table3 = $con->prepare("
-                INSERT INTO shoppingcartitem(ShoppingCartID, ProductID, Quantity)
-                VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    ShoppingCartID = VALUES(ShoppingCartID),
-                    ProductID = VALUES(ProductID) /* This might not need to be done */
-                    Quanity = VALUES(Quanity),
-                
+                    INSERT INTO shoppingcartitem (ShoppingCartID, ProductID, Quantity)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ShoppingCartID = VALUES(ShoppingCartID),
+                        ProductID = VALUES(ProductID),
+                        Quantity = VALUES(Quantity)
                 ");
-                $Table3->bind_param("iii",
-                $ShoppingCartID,
-                        $ProductID,
+
+                $Table3->bind_param(
+                        "iii",
+                        $ItemCartID,
+                        $ItemProductID,
                         $Quantity);
                 $Table3->execute();
 
-                echo implode(", ", $parsedLine) . "<br/>";
-			}
-			$import_succeeded = true;
-		}
-		catch(Exception $exception){
-			$import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
-		}
+                if ($Table3->errno) echo "<b>CartItem ERROR:</b> {$Table3->error}<br>";
+                $Table3->close();
 
-	}
+                echo implode(", ", $parsedLine) . "<br>";
+            }
 
+            $import_succeeded = true;
+
+        }
+        catch (Exception $exception) {
+            $import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
+        }
+    }
 }
 
 ?>
