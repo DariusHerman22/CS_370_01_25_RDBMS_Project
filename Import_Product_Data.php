@@ -40,14 +40,20 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 <?php include_once("Header.php") ?>
 
     <style>
+        /* Custom Blue Theme Variables */
+        :root {
+            --theme-color: #0d6efd; /* Bootstrap Primary Blue */
+            --theme-hover: #0b5ed7;
+        }
+
         .upload-zone {
             border: 2px dashed #dee2e6;
             background-color: #f8f9fa;
             transition: all 0.3s ease;
         }
         .upload-zone:hover {
-            border-color: #0d6efd;
-            background-color: #e9ecef;
+            border-color: var(--theme-color);
+            background-color: #f0f7ff; /* Light blue tint on hover */
         }
         .file-input-overlay {
             position: absolute;
@@ -58,6 +64,21 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
             opacity: 0;
             cursor: pointer;
         }
+
+        /* Theme specific text coloring */
+        .text-theme { color: var(--theme-color) !important; }
+
+        /* Theme specific button */
+        .btn-theme {
+            background-color: var(--theme-color);
+            border-color: var(--theme-color);
+            color: white;
+        }
+        .btn-theme:hover {
+            background-color: var(--theme-hover);
+            border-color: var(--theme-hover);
+            color: white;
+        }
     </style>
 
     <div class="container my-5">
@@ -65,7 +86,7 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
             <div class="col-md-8 col-lg-6">
 
                 <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header bg-white py-3 border-top border-4" style="border-color: var(--theme-color) !important;">
                         <h3 class="mb-0 text-center fw-bold text-dark">Product Data Import</h3>
                     </div>
 
@@ -90,9 +111,8 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 
                             <div class="upload-zone rounded p-5 text-center position-relative mb-4">
                                 <div class="mb-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-cloud-arrow-up text-primary" viewBox="0 0 16 16">
-                                        <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
-                                        <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-box-seam text-theme" viewBox="0 0 16 16">
+                                        <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2l-2.218-.887zm3.564 1.426L5.596 5 8 5.961 14.154 3.5l-2.404-.961zm3.25 1.7-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/>
                                     </svg>
                                 </div>
                                 <h5 class="fw-bold">Drag and drop product file</h5>
@@ -101,10 +121,10 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
                                 <input class="file-input-overlay" type="file" name="importFile" id="importFile" onchange="updateFileName(this)" />
                             </div>
 
-                            <div id="fileNameDisplay" class="text-center text-primary fw-bold mb-3 small" style="min-height: 20px;"></div>
+                            <div id="fileNameDisplay" class="text-center text-theme fw-bold mb-3 small" style="min-height: 20px;"></div>
 
                             <div class="d-grid">
-                                <input class="btn btn-primary btn-lg" type="submit" value="Upload Product Data" />
+                                <input class="btn btn-theme btn-lg" type="submit" value="Upload Product Data" />
                             </div>
 
                         </form>
