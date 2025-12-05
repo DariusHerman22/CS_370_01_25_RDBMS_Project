@@ -8,7 +8,8 @@ $import_error_message = "";
 if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 {
 	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+    /* Replace with your own DB information */
+    $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 	if( mysqli_connect_errno() ){
 		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
@@ -20,10 +21,96 @@ if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 			$contents = file_get_contents( $_FILES[ "importFile" ][ "tmp_name" ] );
 			$lines = explode( "\n", $contents );
 
-			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
+            $isFirstRow = true;
+
+            foreach( $lines as $line){
+
+                if (trim($line) === "") continue;
+
+                $parsedLine = str_getcsv($line);
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                if(count($parsedLine) < 16){continue;}
+
+                $CustomerID = (int)$parsedLine[0];
+                $FName = $parsedLine[1];
+                $LName = $parsedLine[2];
+
+                $PhoneNumber = $parsedLine[5];
+                $EmailAddress = $parsedLine[6];
+
+                $CustomerAddressID = (int)$parsedLine[8];
+                $StreetNameNumber = $parsedLine[10];
+                $City = $parsedLine[11];
+                $State = $parsedLine[12];
+                $ZipCode = $parsedLine[13];
+                $Country = $parsedLine[14];
+                $AddressType = $parsedLine[15];
+
+                $Table1 = $con->prepare("
+                INSERT INTO customer(CustomerID, Fname, Lname)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    CustomerID = VALUES(CustomerID),
+                    FName = VALUES(FName),
+                    LName = VALUES(LName)
+                ");
+                $Table1->bind_param(
+                        "iss",
+                        $CustomerID,
+                        $FName,
+                        $LName);
+                $Table1->execute();
+                $Table1->close();
+
+                $Table2 = $con->prepare("
+                INSERT INTO customercontactinfo(CustomerID, PhoneNumber, EmailAddress)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    CustomerID = VALUES(CustomerID),
+                    PhoneNumber = VALUES(PhoneNumber),
+                    EmailAddress = VALUES(EmailAddress)
+                ");
+                $Table2->bind_param(
+                        "iss",
+                        $CustomerID,
+                        $PhoneNumber,
+                        $EmailAddress);
+                $Table2->execute();
+                $Table2->close();
+
+                $Table3 = $con->prepare("
+                INSERT INTO customeraddress(CustomerAddressID, CustomerID, StreetNameNumber,
+                            City, State, ZipCode, Country, AddressType)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    CustomerAddressID = VALUES(CustomerAddressID),
+                    CustomerID = VALUES(CustomerID),
+                    StreetNameNumber = VALUES(StreetNameNumber),
+                    City = VALUES(City),
+                    State = VALUES(State),
+                    Zipcode = VALUES(ZipCode),
+                    Country = VALUES(Country),
+                    AddressType = VALUES(AddressType)
+                ");
+                $Table3->bind_param("iissssss",
+                $CustomerAddressID,
+                        $CustomerID,
+                        $StreetNameNumber,
+                        $City,
+                        $State,
+                        $ZipCode,
+                        $Country,
+                        $AddressType
+                );
+                $Table3->execute();
+                $Table3->close();
+
+                echo implode(", ", $parsedLine) . "<br/>";
 			}
 			$import_succeeded = true;
 		}

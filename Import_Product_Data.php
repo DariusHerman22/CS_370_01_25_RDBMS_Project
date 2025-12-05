@@ -5,40 +5,122 @@ $import_attempted = false;
 $import_succeeded = false;
 $import_error_message = "";
 
-if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
-{
-	$import_attempted = true;
-	$con = @mysqli_connect("localhost", "pizza_user", "Password Here", "Database Name Here");
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-	if( mysqli_connect_errno() ){
-		$import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
-	}
-	else{
-		$import_succeeded = true;
+    $import_attempted = true;
+    /* Replace with your own DB information */
+    $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
-		try{
-			$contents = file_get_contents( $_FILES[ "importFile" ][ "tmp_name" ] );
-			$lines = explode( "\n", $contents );
+    if (mysqli_connect_errno()) {
+        $import_error_message = "Failed to connect to MySQL: " . mysqli_connect_error();
+    }
+    else {
+        $import_succeeded = true;
 
-			foreach( $lines as $line){
-				$parsed_csv_line = str_getcsv( $line );
-				// TODO: normalize the unnormalized data
-				echo implode(", ", $parsed_csv_line) . "<br/>";
-			}
-			$import_succeeded = true;
-		}
-		catch(Exception $exception){
-			$import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
-		}
+        try {
+            $contents = file_get_contents($_FILES["importFile"]["tmp_name"]);
+            $lines = explode("\n", $contents);
 
-	}
+            $isFirstRow = true;
 
+            foreach ($lines as $line) {
+
+                if (trim($line) === "") continue;
+
+                $parsedLine = str_getcsv($line);
+
+                if ($isFirstRow) {
+                    $isFirstRow = false;
+                    continue;
+                }
+
+                if (count($parsedLine) < 13) continue;
+
+                $ProductID = (int)$parsedLine[0];
+                $VendorCompanyID = (int)$parsedLine[1];
+                $ProductName = $parsedLine[2];
+                $ProductDesc = $parsedLine[3];
+                $ProductPrice = (double)$parsedLine[4];
+                $ProductStock = (int)$parsedLine[5];
+
+                $ShoppingCartID = (int)$parsedLine[7];
+                $CustomerID = (int)$parsedLine[8];
+
+                $ItemCartID = (int)$parsedLine[10];
+                $ItemProductID = (int)$parsedLine[11];
+                $Quantity = (int)$parsedLine[12];
+
+                $Table1 = $con->prepare("
+                    INSERT INTO product
+                    (ProductID, VendorCompanyID, ProductName,
+                     ProductDesc, ProductPrice, ProductStock)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ProductID = VALUES(ProductID),
+                        VendorCompanyID = VALUES(VendorCompanyID),
+                        ProductName = VALUES(ProductName),
+                        ProductDesc = VALUES(ProductDesc),
+                        ProductPrice = VALUES(ProductPrice),
+                        ProductStock = VALUES(ProductStock)
+                ");
+                $Table1->bind_param(
+                        "iissdi",
+                        $ProductID,
+                        $VendorCompanyID,
+                        $ProductName,
+                        $ProductDesc,
+                        $ProductPrice,
+                        $ProductStock);
+                $Table1->execute();
+                $Table1->close();
+
+                $Table2 = $con->prepare("
+                    INSERT INTO shoppingcart (ShoppingCartID, CustomerID)
+                    VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ShoppingCartID = VALUES(ShoppingCartID),
+                        CustomerID = VALUES(CustomerID)
+                ");
+
+                $Table2->bind_param(
+                        "ii",
+                        $ShoppingCartID,
+                        $CustomerID);
+                $Table2->execute();
+                $Table2->close();
+
+                $Table3 = $con->prepare("
+                    INSERT INTO shoppingcartitem (ShoppingCartID, ProductID, Quantity)
+                    VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE
+                        ShoppingCartID = VALUES(ShoppingCartID),
+                        ProductID = VALUES(ProductID),
+                        Quantity = VALUES(Quantity)
+                ");
+
+                $Table3->bind_param(
+                        "iii",
+                        $ItemCartID,
+                        $ItemProductID,
+                        $Quantity);
+                $Table3->execute();
+                $Table3->close();
+
+                echo implode(", ", $parsedLine) . "<br>";
+            }
+
+            $import_succeeded = true;
+
+        }
+        catch (Exception $exception) {
+            $import_error_message = $exception->getMessage() . " at: " . $exception->getFile() . " (line: " . $exception->getLine() . ") <br/>";
+        }
+    }
 }
 
 ?>
 
 <?php include_once("Header.php") ?>
-
     <style>
         /* Custom Blue Theme Variables */
         :root {
