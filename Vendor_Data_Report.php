@@ -3,7 +3,6 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $connection_error = false;
 $connection_error_message = "";
 
-/* Replace with your own DB information */
 $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 if(mysqli_connect_errno()){
@@ -19,45 +18,60 @@ function output_error($title, $error){
 
 }
 
-function output_table_open(){
-    echo "<table class='table table-striped'>\n";
+function VendorHeaderRow(){
+    echo "<table class='table table-striped table-bordered'>\n";
     echo "<thead>\n";
-    echo "<tr class='pizzaDataHeaderRow'>\n";
-    echo"    <td>Name</td>\n";
-    echo"    <td>Age</td>\n";
-    echo"    <td>Gender</td>\n";
+    echo "<tr>\n";
+    echo"    <th>Vendor Company ID</th>\n";
+    echo"    <th>Vendor Company</th>\n";
+    echo"    <th>Phone Number</th>\n";
+    echo"    <th>Email Address</th>\n";
     echo "</tr>\n";
     echo "</thead>\n";
 }
 
-function output_table_close(){
-    echo "</table>\n";
+function VendorInfoRow($row) {
+    echo "<tr>";
+    echo "<td>{$row['VendorCompanyID']}</td>";
+    echo "<td>{$row['VendorCompanyName']}</td>";
+    echo "<td>{$row['PhoneNumber']}</td>";
+    echo "<td>{$row['EmailAddress']}</td>";
+    echo "</tr>";
 }
 
-function output_person_row($name, $age, $gender){
-    echo "<tr class='pizzaDataRow'>\n";
-    echo "<td>" . $name . "</td>\n";
-    echo "<td>" . $age . "</td>\n";
-    echo "<td>" . $gender . "</td>\n";
-    echo "</tr>\n";
-}
+function AddressRow($address){
+    echo "<tr><td colspan='4'>";
 
-function output_person_details_row($pizzas, $pizzerias){
-    $pizzas_str = "None";
-    $pizzerias_str = "None";
-    if(sizeof($pizzas) > 0){
-        $pizzas_str = implode(", ", $pizzas);
-    }
-    if(sizeof($pizzerias) > 0 ){
-        $pizzerias_str = implode(", ", $pizzerias);
+    echo "<table class='table table-striped table-sm table-bordered' 
+            style='margin-left:30px; width:95%; table-layout:fixed;'>";
+
+    echo "<thead><tr>";
+    echo "<th style='width:120px;'>Address Type</th>";
+    echo "<th style='width:200px;'>Street</th>";
+    echo "<th style='width:150px;'>City</th>";
+    echo "<th style='width:80px;'>State</th>";
+    echo "<th style='width:120px;'>Zipcode</th>";
+    echo "<th style='width:150px;'>Country</th>";
+    echo "</tr></thead>";
+
+    echo "<tbody>";
+
+
+    foreach ($address as $a) {
+        echo "<tr>";
+        echo "<td>{$a['AddressType']}</td>";
+        echo "<td>{$a['StreetNameNumber']}</td>";
+        echo "<td>{$a['City']}</td>";
+        echo "<td>{$a['State']}</td>";
+        echo "<td>{$a['ZipCode']}</td>";
+        echo "<td>{$a['Country']}</td>";
+        echo "</tr>";
     }
 
-    echo "<tr>\n";
-    echo "    <td colspan='3' class='pizzaDataDetailsCell'>\n";
-    echo "      Pizzas Eaten:" . $pizzas_str . "<br/>\n";
-    echo "      Pizzerias Frequented:" . $pizzerias_str . "\n";
-    echo "    </td>\n";
-    echo "</tr>\n";
+    echo "</tbody>";
+    echo "</table>";
+
+    echo "</td></tr>";
 }
 
 ?>
@@ -65,62 +79,64 @@ function output_person_details_row($pizzas, $pizzerias){
 
 <?php include_once("Header.php")?>
 
-        <style>
-            .pizzaDataTable{}
-            .pizzaDataHeaderRow td { padding-right: 20px; }
-            .pizzaDataRow td { padding-left: 10px; }
-            .pizzaDataDetailsCell { padding-left: 20px !important; }
-        </style>
-        <h1>Customer Data Report</h1>
-        <?php
+<h1>Vendor Data Report</h1>
+<?php
 
-            if($connection_error){
-                output_error("Database connection failure", $connection_error_message);
-            }else{
-                $query = " SELECT t0.name, t0.age, t0.gender, t1.pizza, t2.pizzeria"
-                    . " FROM Person t0"
-                    . " LEFT OUTER JOIN Eats t1 ON t0.name = t1.name"
-                    . " LEFT OUTER JOIN Frequents t2 ON t0.name = t2.name"
-                    . " ORDER BY t0.name, t1.pizza, t2.pizzeria";
+if($connection_error){
+    output_error("Database connection failure", $connection_error_message);
+}else{
+    $query =
+            "SELECT t0.VendorCompanyID, t0.VendorCompanyName, t1.PhoneNumber,
+            t1.EmailAddress, t2.VendorAddressID, t2.StreetNameNumber, t2.City,
+            t2.State, t2.ZipCode, t2.Country, t2.AddressType"
+            . " FROM VendorCompany t0"
+            . " LEFT OUTER JOIN VendorContactInfo t1 ON t0.VendorCompanyID = t1.VendorCompanyID"
+            . " LEFT OUTER JOIN VendorCompanyAddress t2 ON t0.VendorCompanyID = t2.VendorCompanyID"
+    ;
 
-                $result = mysqli_query($con, $query);
+    $result = mysqli_query($con, $query);
 
-                if( !$result ){
-                    if(mysqli_errno($con)){
-                        output_error("Data retrieval failure!", mysqli_error($con));
-                    }else{
-                        echo "No Pizza Data Found!\n";
-                    }
-                }else{
-                    output_table_open();
+    if( !$result ){
+        if(mysqli_errno($con)){
+            output_error("Data retrieval failure!", mysqli_error($con));
+        }
+    }else{
+        if (mysqli_num_rows($result) === 0) {
+            echo "<h2 style='color:red; text-align:center; padding-bottom:615px;' >No Vendor Data Found!</h2>";
+            include_once("Footer.php");
+            exit;
+        }
+        VendorHeaderRow();
 
-                    $last_name = null;
-                    $pizzas = array();
-                    $pizzerias = array();
-                    while($row = $result->fetch_array()){
-                        if($last_name != $row["name"]){
-                            if($last_name != null){
-                                output_person_details_row($pizzas, $pizzerias);
-                            }
+        $CurrentVendor = null;
+        $CurrentAddress = null;
 
-                            output_person_row($row['name'], $row['age'], $row['gender']);
+        while($row = $result->fetch_assoc()){
 
-                            $pizzas = array();
-                            $pizzerias = array();
-                        }
+            if ($CurrentVendor !== $row["VendorCompanyID"]) {
 
-                        if( ! in_array($row["pizza"], $pizzas) )
-                            $pizzas[] = $row["pizza"];
-                        if( ! in_array($row["pizzeria"], $pizzerias) )
-                            $pizzerias[] = $row["pizzeria"];
-
-                        $last_name = $row["name"];
-                    }
-                    output_person_details_row($pizzas, $pizzerias);
-
-                    output_table_close();
+                if ($CurrentVendor !== null) {
+                    AddressRow($CurrentAddress);
                 }
+
+                VendorInfoRow($row);
+
+                $CurrentVendor = $row["VendorCompanyID"];
+                $CurrentAddress = [];
             }
 
-        ?>
+            if ($row["VendorAddressID"] !== null) {
+                $CurrentAddress[] = $row;
+            }
+
+        }
+
+        AddressRow($CurrentAddress);
+        echo "</table>";
+
+    }
+
+}
+
+?>
 <?php include_once("Footer.php")?>
