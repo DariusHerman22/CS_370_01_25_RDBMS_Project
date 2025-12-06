@@ -8,6 +8,7 @@ $import_error_message = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $import_attempted = true;
+    /* Replace with your own DB information */
     $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
     if (mysqli_connect_errno()) {
@@ -103,8 +104,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $ItemProductID,
                         $Quantity);
                 $Table3->execute();
-
-                if ($Table3->errno) echo "<b>CartItem ERROR:</b> {$Table3->error}<br>";
                 $Table3->close();
 
                 echo implode(", ", $parsedLine) . "<br>";

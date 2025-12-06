@@ -8,6 +8,7 @@ $import_error_message = "";
 if( $_SERVER[ "REQUEST_METHOD" ] == "POST" )
 {
 	$import_attempted = true;
+    /* Replace with your own DB information */
     $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 	if( mysqli_connect_errno() ){
