@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     continue;
                 }
 
-                if (count($parsedLine) < 13) continue;
+                if (count($parsedLine) < 14) continue;
 
                 $ProductID = (int)$parsedLine[0];
                 $VendorCompanyID = (int)$parsedLine[1];
@@ -46,9 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $ShoppingCartID = (int)$parsedLine[7];
                 $CustomerID = (int)$parsedLine[8];
 
-                $ItemCartID = (int)$parsedLine[10];
-                $ItemProductID = (int)$parsedLine[11];
-                $Quantity = (int)$parsedLine[12];
+                $ItemCartID = (int)$parsedLine[11];
+                $ItemProductID = (int)$parsedLine[12];
+                $Quantity = (int)$parsedLine[13];
 
                 $Table1 = $con->prepare("
                     INSERT INTO product
@@ -75,17 +75,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $Table1->close();
 
                 $Table2 = $con->prepare("
-                    INSERT INTO shoppingcart (ShoppingCartID, CustomerID)
-                    VALUES (?, ?)
+                    INSERT INTO shoppingcart (ShoppingCartID, CustomerID, ProductID)
+                    VALUES (?, ?, ?)
                     ON DUPLICATE KEY UPDATE
                         ShoppingCartID = VALUES(ShoppingCartID),
-                        CustomerID = VALUES(CustomerID)
+                        CustomerID = VALUES(CustomerID),
+                        ProductID = VALUES(ProductID)
                 ");
 
                 $Table2->bind_param(
-                        "ii",
+                        "iii",
                         $ShoppingCartID,
-                        $CustomerID);
+                        $CustomerID,
+                            $ProductID);
                 $Table2->execute();
                 $Table2->close();
 

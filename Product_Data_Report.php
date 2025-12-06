@@ -1,9 +1,8 @@
-Import_Customer_Data.php<?php
+<?php
 mysqli_report(MYSQLI_REPORT_OFF);
 $connection_error = false;
 $connection_error_message = "";
 
-/* Replace with your own DB information */
 $con = @mysqli_connect("localhost", "EpicAwesomeStoreUser", "password", "EpicAwesomeStore");
 
 if(mysqli_connect_errno()){
@@ -19,45 +18,58 @@ function output_error($title, $error){
 
 }
 
-function output_table_open(){
-    echo "<table class='table table-striped'>\n";
+function CartHeaderRow(){
+    echo "<table class='table table-striped table-bordered'>\n";
     echo "<thead>\n";
-    echo "<tr class='pizzaDataHeaderRow'>\n";
-    echo"    <td>Name</td>\n";
-    echo"    <td>Age</td>\n";
-    echo"    <td>Gender</td>\n";
+    echo "<tr>\n";
+    echo"    <th>Customer ID</th>\n";
+    echo"    <th>Shopping Cart ID</th>\n";
     echo "</tr>\n";
     echo "</thead>\n";
 }
 
-function output_table_close(){
-    echo "</table>\n";
+function CartInfoRow($row) {
+    echo "<tr>";
+    echo "<td>{$row['CustomerID']}</td>";
+    echo "<td>{$row['ShoppingCartID']}</td>";
+    echo "</tr>";
 }
 
-function output_person_row($name, $age, $gender){
-    echo "<tr class='pizzaDataRow'>\n";
-    echo "<td>" . $name . "</td>\n";
-    echo "<td>" . $age . "</td>\n";
-    echo "<td>" . $gender . "</td>\n";
-    echo "</tr>\n";
-}
+function DataRow($data){
+    echo "<tr><td colspan='4'>";
 
-function output_person_details_row($pizzas, $pizzerias){
-    $pizzas_str = "None";
-    $pizzerias_str = "None";
-    if(sizeof($pizzas) > 0){
-        $pizzas_str = implode(", ", $pizzas);
-    }
-    if(sizeof($pizzerias) > 0 ){
-        $pizzerias_str = implode(", ", $pizzerias);
+    echo "<table class='table table-striped table-sm table-bordered' 
+            style='margin-left:30px; width:95%; table-layout:fixed;'>";
+
+    echo "<thead><tr>";
+    echo "<th style='width:85px; text-align:center;'>Product ID</th>";
+    echo "<th style='width:85px; text-align:center;'>Vendor Company ID</th>";
+    echo "<th style='width:85px; text-align:center;'>Product Name</th>";
+    echo "<th style='width:100px; text-align:center;'>Product Description</th>";
+    echo "<th style='width:85px; text-align:center;'>Product Price</th>";
+    echo "<th style='width:85px; text-align:center;'>Product Stock</th>";
+    echo "<th style='width:85px; text-align:center;'>Product Quantity</th>";
+    echo "</tr></thead>";
+
+    echo "<tbody>";
+
+
+    foreach ($data as $a) {
+        echo "<tr>";
+        echo "<td>{$a['ProductID']}</td>";
+        echo "<td>{$a['VendorCompanyID']}</td>";
+        echo "<td>{$a['ProductName']}</td>";
+        echo "<td>{$a['ProductDesc']}</td>";
+        echo "<td>{$a['ProductPrice']}</td>";
+        echo "<td>{$a['ProductStock']}</td>";
+        echo "<td>{$a['Quantity']}</td>";
+        echo "</tr>";
     }
 
-    echo "<tr>\n";
-    echo "    <td colspan='3' class='pizzaDataDetailsCell'>\n";
-    echo "      Pizzas Eaten:" . $pizzas_str . "<br/>\n";
-    echo "      Pizzerias Frequented:" . $pizzerias_str . "\n";
-    echo "    </td>\n";
-    echo "</tr>\n";
+    echo "</tbody>";
+    echo "</table>";
+
+    echo "</td></tr>";
 }
 
 ?>
@@ -65,62 +77,63 @@ function output_person_details_row($pizzas, $pizzerias){
 
 <?php include_once("Header.php")?>
 
-        <style>
-            .pizzaDataTable{}
-            .pizzaDataHeaderRow td { padding-right: 20px; }
-            .pizzaDataRow td { padding-left: 10px; }
-            .pizzaDataDetailsCell { padding-left: 20px !important; }
-        </style>
-        <h1>Customer Data Report</h1>
-        <?php
+<h1>Product & Shopping Cart Data Report</h1>
+<?php
 
-            if($connection_error){
-                output_error("Database connection failure", $connection_error_message);
-            }else{
-                $query = " SELECT t0.name, t0.age, t0.gender, t1.pizza, t2.pizzeria"
-                    . " FROM Person t0"
-                    . " LEFT OUTER JOIN Eats t1 ON t0.name = t1.name"
-                    . " LEFT OUTER JOIN Frequents t2 ON t0.name = t2.name"
-                    . " ORDER BY t0.name, t1.pizza, t2.pizzeria";
+if($connection_error){
+    output_error("Database connection failure", $connection_error_message);
+}else{
+    $query =
+            "SELECT t0.ProductID, t0.VendorCompanyID, t0.ProductName, t0.ProductDesc, 
+            t0.ProductPrice, t0.ProductStock, t1.ShoppingCartID, t1.CustomerID, t2.Quantity "
+            . " FROM Product t0"
+            . " LEFT OUTER JOIN ShoppingCart t1 ON t0.ProductID = t1.ProductID"
+            . " LEFT OUTER JOIN ShoppingCartItem t2 ON t1.ShoppingCartID = t2.ShoppingCartID"
+    ;
 
-                $result = mysqli_query($con, $query);
+    $result = mysqli_query($con, $query);
 
-                if( !$result ){
-                    if(mysqli_errno($con)){
-                        output_error("Data retrieval failure!", mysqli_error($con));
-                    }else{
-                        echo "No Pizza Data Found!\n";
-                    }
-                }else{
-                    output_table_open();
+    if( !$result ){
+        if(mysqli_errno($con)){
+            output_error("Data retrieval failure!", mysqli_error($con));
+        }
+    }else{
+        if (mysqli_num_rows($result) === 0) {
+            echo "<h2 style='color:red; text-align:center; padding-bottom:615px;' >No Product & Shopping Cart Data Found!</h2>";
+            include_once("Footer.php");
+            exit;
+        }
+        CartHeaderRow();
 
-                    $last_name = null;
-                    $pizzas = array();
-                    $pizzerias = array();
-                    while($row = $result->fetch_array()){
-                        if($last_name != $row["name"]){
-                            if($last_name != null){
-                                output_person_details_row($pizzas, $pizzerias);
-                            }
+        $CurrentProduct = null;
+        $Data = null;
 
-                            output_person_row($row['name'], $row['age'], $row['gender']);
+        while($row = $result->fetch_assoc()){
 
-                            $pizzas = array();
-                            $pizzerias = array();
-                        }
+            if ($CurrentProduct !== $row["ProductID"]) {
 
-                        if( ! in_array($row["pizza"], $pizzas) )
-                            $pizzas[] = $row["pizza"];
-                        if( ! in_array($row["pizzeria"], $pizzerias) )
-                            $pizzerias[] = $row["pizzeria"];
-
-                        $last_name = $row["name"];
-                    }
-                    output_person_details_row($pizzas, $pizzerias);
-
-                    output_table_close();
+                if ($CurrentProduct !== null) {
+                    DataRow($Data);
                 }
+
+                CartInfoRow($row);
+
+                $CurrentProduct = $row["ProductID"];
+                $Data = [];
             }
 
-        ?>
+            if ($row["ProductID"] !== null) {
+                $Data[] = $row;
+            }
+
+        }
+
+        DataRow($Data);
+        echo "</table>";
+
+    }
+
+}
+
+?>
 <?php include_once("Footer.php")?>
