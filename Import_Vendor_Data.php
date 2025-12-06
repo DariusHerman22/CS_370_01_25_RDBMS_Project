@@ -109,7 +109,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $Table3->execute();
                 $Table3->close();
 
-                echo implode(", ", $parsedLine) . "<br>";
+//                echo implode(", ", $parsedLine) . "<br>";
             }
 
         }
