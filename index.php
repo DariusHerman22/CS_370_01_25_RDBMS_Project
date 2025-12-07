@@ -1,7 +1,7 @@
 <?php include_once("header.php") ?>
 
     <style>
-        .Top-box {
+        .top-box {
             background-color: var(--bs-gray-300);
             border-radius: 10px;
             padding: 40px 20px;
