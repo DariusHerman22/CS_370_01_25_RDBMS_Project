@@ -11,132 +11,164 @@ if(mysqli_connect_errno()){
 }
 
 function output_error($title, $error){
-    echo "<span style='color: red;'>\n";
-    echo "<h2>" . $title . "</h2>";
-    echo "<h4>" . $error . "</h4>";
-    echo "</span>";
-
+    echo "<div class='alert alert-danger shadow-sm text-center my-4'>";
+    echo "<h4 class='alert-heading fw-bold'><i class='bi bi-exclamation-triangle-fill'></i> " . $title . "</h4>";
+    echo "<hr>";
+    echo "<p class='mb-0'>" . $error . "</p>";
+    echo "</div>";
 }
 
 function VendorHeaderRow(){
-    echo "<table class='table table-striped table-bordered'>\n";
-    echo "<thead>\n";
-    echo "<tr>\n";
-    echo"    <th>Vendor Company ID</th>\n";
-    echo"    <th>Vendor Company</th>\n";
-    echo"    <th>Phone Number</th>\n";
-    echo"    <th>Email Address</th>\n";
-    echo "</tr>\n";
-    echo "</thead>\n";
+    echo "<div class='table-responsive'>";
+    echo "<table class='table table-hover align-middle border text-dark'>";
+    echo "<thead class='text-dark border-bottom border-2'>";
+    echo "<tr>";
+    echo "    <th class='py-3'>ID</th>";
+    echo "    <th class='py-3'>Company Name</th>";
+    echo "    <th class='py-3'>Phone Number</th>";
+    echo "    <th class='py-3'>Email Address</th>";
+    echo "</tr>";
+    echo "</thead>";
+    echo "<tbody>";
 }
 
 function VendorInfoRow($row) {
-    echo "<tr>";
-    echo "<td>{$row['VendorCompanyID']}</td>";
-    echo "<td>{$row['VendorCompanyName']}</td>";
-    echo "<td>{$row['PhoneNumber']}</td>";
-    echo "<td>{$row['EmailAddress']}</td>";
+    echo "<tr class='fw-semibold'>";
+    echo "<td>#" . $row['VendorCompanyID'] . "</td>";
+    echo "<td class='text-dark'>" . $row['VendorCompanyName'] . "</td>";
+    echo "<td>" . $row['PhoneNumber'] . "</td>";
+    echo "<td>" . $row['EmailAddress'] . "</td>";
     echo "</tr>";
 }
 
 function AddressRow($address){
-    echo "<tr><td colspan='4'>";
+    echo "<tr>";
+    echo "<td colspan='4' class='p-0 border-0'>";
 
-    echo "<table class='table table-striped table-sm table-bordered' 
-            style='margin-left:30px; width:95%; table-layout:fixed;'>";
+    echo "<div class='bg-light p-4 border-bottom'>";
+    echo "<h6 class='fw-bold mb-3' style='color: #fd7e14;'><i class='bi bi-building'></i> Company Locations</h6>";
 
-    echo "<thead><tr>";
-    echo "<th style='width:120px;'>Address Type</th>";
-    echo "<th style='width:200px;'>Street</th>";
-    echo "<th style='width:150px;'>City</th>";
-    echo "<th style='width:80px;'>State</th>";
-    echo "<th style='width:120px;'>Zipcode</th>";
-    echo "<th style='width:150px;'>Country</th>";
-    echo "</tr></thead>";
-
+    echo "<table class='table table-sm table-bordered bg-white mb-0 shadow-sm text-dark' style='font-size: 0.9em;'>";
+    echo "<thead class='table-light text-dark'>";
+    echo "<tr>";
+    echo "<th>Type</th>";
+    echo "<th>Street</th>";
+    echo "<th>City</th>";
+    echo "<th>State</th>";
+    echo "<th>Zip</th>";
+    echo "<th>Country</th>";
+    echo "</tr>";
+    echo "</thead>";
     echo "<tbody>";
-
 
     foreach ($address as $a) {
         echo "<tr>";
-        echo "<td>{$a['AddressType']}</td>";
-        echo "<td>{$a['StreetNameNumber']}</td>";
-        echo "<td>{$a['City']}</td>";
-        echo "<td>{$a['State']}</td>";
-        echo "<td>{$a['ZipCode']}</td>";
-        echo "<td>{$a['Country']}</td>";
+        echo "<td><span class='badge' style='background-color: #fd7e14; color: white;'>" . $a['AddressType'] . "</span></td>";
+        echo "<td>" . $a['StreetNameNumber'] . "</td>";
+        echo "<td>" . $a['City'] . "</td>";
+        echo "<td>" . $a['State'] . "</td>";
+        echo "<td>" . $a['ZipCode'] . "</td>";
+        echo "<td>" . $a['Country'] . "</td>";
         echo "</tr>";
     }
 
     echo "</tbody>";
     echo "</table>";
+    echo "</div>";
 
-    echo "</td></tr>";
+    echo "</td>";
+    echo "</tr>";
 }
-
 ?>
-
 
 <?php include_once("Header.php")?>
 
-<h1>Vendor Data Report</h1>
-<?php
+    <div class="container my-5">
 
-if($connection_error){
-    output_error("Database connection failure", $connection_error_message);
-}else{
-    $query =
-            "SELECT t0.VendorCompanyID, t0.VendorCompanyName, t1.PhoneNumber,
-            t1.EmailAddress, t2.VendorAddressID, t2.StreetNameNumber, t2.City,
-            t2.State, t2.ZipCode, t2.Country, t2.AddressType"
-            . " FROM VendorCompany t0"
-            . " LEFT OUTER JOIN VendorContactInfo t1 ON t0.VendorCompanyID = t1.VendorCompanyID"
-            . " LEFT OUTER JOIN VendorCompanyAddress t2 ON t0.VendorCompanyID = t2.VendorCompanyID"
-    ;
+        <div class="card shadow-sm border-0">
 
-    $result = mysqli_query($con, $query);
+            <div class="card-header bg-white py-4 border-top border-4 d-flex justify-content-between align-items-center" style="border-color: #fd7e14 !important;">
+                <div>
+                    <h2 class="mb-0 fw-bold text-dark">Vendor Data Report</h2>
+                    <p class="text-muted small mb-0 mt-1">Generated from current database records</p>
+                </div>
+                <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </div>
 
-    if( !$result ){
-        if(mysqli_errno($con)){
-            output_error("Data retrieval failure!", mysqli_error($con));
-        }
-    }else{
-        if (mysqli_num_rows($result) === 0) {
-            echo "<h2 style='color:red; text-align:center; padding-bottom:615px;' >No Vendor Data Found!</h2>";
-            include_once("Footer.php");
-            exit;
-        }
-        VendorHeaderRow();
+            <div class="card-body p-0">
 
-        $CurrentVendor = null;
-        $CurrentAddress = null;
+                <?php
+                if($connection_error){
+                    echo "<div class='p-4'>";
+                    output_error("Database connection failure", $connection_error_message);
+                    echo "</div>";
+                }else{
 
-        while($row = $result->fetch_assoc()){
+                    $query =
+                            "SELECT t0.VendorCompanyID, t0.VendorCompanyName, t1.PhoneNumber,
+        t1.EmailAddress, t2.VendorAddressID, t2.StreetNameNumber,
+        t2.City, t2.State, t2.ZipCode, t2.Country, t2.AddressType"
+                            . " FROM VendorCompany t0"
+                            . " LEFT OUTER JOIN VendorContactInfo t1 ON t0.VendorCompanyID = t1.VendorCompanyID"
+                            . " LEFT OUTER JOIN VendorCompanyAddress t2 ON t0.VendorCompanyID = t2.VendorCompanyID"
+                    ;
 
-            if ($CurrentVendor !== $row["VendorCompanyID"]) {
+                    $result = mysqli_query($con, $query);
 
-                if ($CurrentVendor !== null) {
-                    AddressRow($CurrentAddress);
+                    if( !$result ){
+                        if(mysqli_errno($con)){
+                            echo "<div class='p-4'>";
+                            output_error("Data retrieval failure!", mysqli_error($con));
+                            echo "</div>";
+                        }
+                    }else{
+                        if (mysqli_num_rows($result) === 0) {
+                            echo "<div class='text-center py-5'>";
+                            echo "<div class='mb-3'><i class='bi bi-folder-x text-muted' style='font-size: 3rem;'></i></div>";
+                            echo "<h4 class='text-muted'>No Vendor Data Found</h4>";
+                            echo "<p class='text-muted'>Please run the Import tool to add vendors.</p>";
+                            echo "</div>";
+                        } else {
+
+                            VendorHeaderRow();
+
+                            $CurrentVendor = null;
+                            $CurrentAddress = null;
+
+                            while($row = $result->fetch_assoc()){
+
+                                if ($CurrentVendor !== $row["VendorCompanyID"]) {
+
+                                    if ($CurrentVendor !== null) {
+                                        AddressRow($CurrentAddress);
+                                    }
+
+                                    VendorInfoRow($row);
+
+                                    $CurrentVendor = $row["VendorCompanyID"];
+                                    $CurrentAddress = [];
+                                }
+
+                                if ($row["VendorAddressID"] !== null) {
+                                    $CurrentAddress[] = $row;
+                                }
+                            }
+
+                            if ($CurrentVendor !== null) {
+                                AddressRow($CurrentAddress);
+                            }
+
+                            echo "</tbody>";
+                            echo "</table>";
+                            echo "</div>";
+                        }
+                    }
                 }
+                ?>
+            </div>
+        </div>
+    </div>
 
-                VendorInfoRow($row);
-
-                $CurrentVendor = $row["VendorCompanyID"];
-                $CurrentAddress = [];
-            }
-
-            if ($row["VendorAddressID"] !== null) {
-                $CurrentAddress[] = $row;
-            }
-
-        }
-
-        AddressRow($CurrentAddress);
-        echo "</table>";
-
-    }
-
-}
-
-?>
 <?php include_once("Footer.php")?>

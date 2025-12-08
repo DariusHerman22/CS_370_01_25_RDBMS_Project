@@ -20,9 +20,8 @@ function output_error($title, $error){
 
 function CustomerHeaderRow(){
     echo "<div class='table-responsive'>";
-    // Added 'text-dark' here to force black text everywhere in the table
     echo "<table class='table table-hover align-middle border text-dark'>";
-    echo "<thead class='table-success text-dark'>";
+    echo "<thead class='text-dark border-bottom border-2'>";
     echo "<tr>";
     echo "    <th class='py-3'>ID</th>";
     echo "    <th class='py-3'>Full Name</th>";
@@ -34,7 +33,6 @@ function CustomerHeaderRow(){
 }
 
 function CustomerInfoRow($row) {
-    // Removed 'text-secondary' so it defaults to standard dark text
     echo "<tr class='fw-semibold'>";
     echo "<td>#" . $row['CustomerID'] . "</td>";
     echo "<td>" . $row['FName'] . " " . $row['LName'] . "</td>";
