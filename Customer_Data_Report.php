@@ -90,7 +90,6 @@ function AddressRow($address){
             <div class="card-header bg-white py-4 border-top border-4 border-success d-flex justify-content-between align-items-center">
                 <div>
                     <h2 class="mb-0 fw-bold text-dark">Customer Data Report</h2>
-                    <p class="text-muted small mb-0 mt-1">Generated from current database records</p>
                 </div>
                 <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
                     <i class="bi bi-printer"></i> Print
