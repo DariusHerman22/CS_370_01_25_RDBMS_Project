@@ -51,12 +51,12 @@ function AddressRow($address){
     echo "<table class='table table-sm table-bordered bg-white mb-0 shadow-sm text-dark' style='font-size: 0.9em;'>";
     echo "<thead class='table-light text-dark'>";
     echo "<tr>";
-    echo "<th>Type</th>";
-    echo "<th>Street</th>";
-    echo "<th>City</th>";
-    echo "<th>State</th>";
-    echo "<th>Zip</th>";
-    echo "<th>Country</th>";
+    echo "<th style='width:85px;' >Type</th>";
+    echo "<th style='width:85px;' >Street</th>";
+    echo "<th style='width:85px;' >City</th>";
+    echo "<th style='width:85px;' >State</th>";
+    echo "<th style='width:85px;' >Zip</th>";
+    echo "<th style='width:85px;' >Country</th>";
     echo "</tr>";
     echo "</thead>";
     echo "<tbody>";

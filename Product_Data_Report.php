@@ -48,13 +48,13 @@ function DataRow($data){
 
     echo "<table class='table table-sm table-bordered bg-white mb-0 shadow-sm text-dark' style='font-size: 0.9em;'>";
     echo "<thead class='table-light text-dark'><tr>";
-    echo "<th>ID</th>";
-    echo "<th>Vendor ID</th>";
-    echo "<th>Name</th>";
-    echo "<th>Description</th>";
-    echo "<th>Price</th>";
-    echo "<th>Stock</th>";
-    echo "<th>Quantity in Cart</th>";
+    echo "<th style='width:85px;' >ID</th>";
+    echo "<th style='width:85px;' >Vendor ID</th>";
+    echo "<th style='width:85px;' >Name</th>";
+    echo "<th style='width:85px;' >Description</th>";
+    echo "<th style='width:85px;' >Price</th>";
+    echo "<th style='width:85px;' >Stock</th>";
+    echo "<th style='width:85px;' >Quantity in Cart</th>";
     echo "</tr></thead>";
     echo "<tbody>";
 
